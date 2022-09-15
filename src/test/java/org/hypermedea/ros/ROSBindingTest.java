@@ -1,10 +1,8 @@
 package org.hypermedea.ros;
 
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.bindings.Operation;
-import ch.unisg.ics.interactions.wot.td.bindings.ProtocolBinding;
-import ch.unisg.ics.interactions.wot.td.bindings.ProtocolBindings;
-import ch.unisg.ics.interactions.wot.td.bindings.Response;
+import ch.unisg.ics.interactions.wot.td.bindings.*;
+import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import edu.wpi.rail.jrosbridge.Ros;
 import edu.wpi.rail.jrosbridge.Topic;
@@ -18,8 +16,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ROSBindingTest {
 
@@ -95,24 +92,25 @@ public class ROSBindingTest {
         linearVel.put("z", 0.0);
 
         Map<String, Object> angularVel = new HashMap<>();
-        linearVel.put("x", 0.0);
-        linearVel.put("y", 0.0);
-        linearVel.put("z", 0.0);
+        angularVel.put("x", 0.0);
+        angularVel.put("y", 0.0);
+        angularVel.put("z", 0.0);
 
         Map<String, Object> payload = new HashMap<>();
 
         payload.put("linear", linearVel);
         payload.put("angular", angularVel);
 
-        op.setPayload(null, payload);
+        op.setPayload(new ObjectSchema.Builder().build(), payload);
 
-        Response r = op.execute();
+        op.sendRequest();
+        Response r = op.getResponse();
 
         assertEquals(Response.ResponseStatus.OK, r.getStatus());
     }
 
     @Test
-    public void testSubscribe() {
+    public void testSubscribe() throws NoResponseException {
         Form f = new Form.Builder("ros+ws://localhost:9090/turtle1/pose")
                 .addProperty(ROS.messageType, "turtlesim/Pose")
                 .build();
@@ -121,6 +119,16 @@ public class ROSBindingTest {
         Operation op = b.bind(f, TD.observeProperty);
 
         assertInstanceOf(ROSSubscribeOperation.class, op);
+
+        // wait synchronously for the first response
+        Response response = op.getResponse();
+
+        assertEquals(Response.ResponseStatus.OK, response.getStatus());
+        assertTrue(response.getPayload().isPresent());
+
+        Map<String, Object> json = (Map<String, Object>) response.getPayload().get();
+        assertTrue(json.containsKey("x"));
+        assertInstanceOf(Double.class, json.get("x"));
     }
 
 }

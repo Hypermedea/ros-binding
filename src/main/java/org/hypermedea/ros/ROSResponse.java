@@ -5,16 +5,16 @@ import ch.unisg.ics.interactions.wot.td.bindings.Response;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Optional;
 
 public class ROSResponse implements Response {
 
     private final ResponseStatus status;
 
-    private final Object payload;
+    private final Optional<Object> payload;
 
     public ROSResponse() {
-        this.status = ResponseStatus.OK;
-        this.payload = null;
+        this(ResponseStatus.OK);
     }
 
     public ROSResponse(ResponseStatus status) {
@@ -24,7 +24,7 @@ public class ROSResponse implements Response {
 
     public ROSResponse(Object payload) {
         this.status = ResponseStatus.OK;
-        this.payload = payload;
+        this.payload = Optional.of(payload);
     }
 
     @Override
@@ -33,7 +33,7 @@ public class ROSResponse implements Response {
     }
 
     @Override
-    public Object getPayload() {
+    public Optional<Object> getPayload() {
         return payload;
     }
 

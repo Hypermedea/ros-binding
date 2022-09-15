@@ -1,6 +1,6 @@
 package org.hypermedea.ros;
 
-import ch.unisg.ics.interactions.wot.td.bindings.Operation;
+import ch.unisg.ics.interactions.wot.td.bindings.BaseOperation;
 
 import javax.json.*;
 import java.util.ArrayList;
@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ROSOperation implements Operation {
+public abstract class ROSOperation extends BaseOperation {
 
     protected Object parseJson(JsonStructure json) {
         JsonValue.ValueType vt = json.getValueType();

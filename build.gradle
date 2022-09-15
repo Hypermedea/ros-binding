@@ -18,7 +18,7 @@ dependencies {
     implementation group: 'org.glassfish.tyrus', name: 'tyrus-container-grizzly-client', version: '1.17'
     implementation group: 'org.glassfish.tyrus', name: 'tyrus-server', version: '1.17'
 
-    implementation 'com.github.Hypermedea:wot-td-java:0a17299'
+    implementation 'com.github.Hypermedea:wot-td-java:0794a58'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
