@@ -10,9 +10,9 @@ package org.hypermedea.ros;
  * <p>
  *   Example:
  *   <code><pre>
- *     [] a hctl:Form ;
- *        hctl:target "ros+ws://example.org/turtlesim/cmd_vel" ;
- *        ros:messageType "geometry_msgs/Twist" .
+ * [] a hctl:Form ;
+ *    hctl:target "ros+ws://example.org/turtlesim/cmd_vel" ;
+ *    ros:messageType "geometry_msgs/Twist" .
  *   </pre></code>
  * </p>
  */
@@ -21,7 +21,5 @@ public class ROS {
     public static final String NAMESPACE = "https://github.com/RobotWebTools/rosbridge_suite/blob/ros1/ROSBRIDGE_PROTOCOL.md#";
 
     public static final String messageType = NAMESPACE + "messageType";
-
-    public static final String methodName = NAMESPACE + "methodName";
 
 }

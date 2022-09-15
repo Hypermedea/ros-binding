@@ -24,6 +24,8 @@ public class ROSSubscribeOperation extends ROSOperation {
 
     @Override
     public void sendRequest() throws IOException {
+        if (!topic.getRos().isConnected()) topic.getRos().connect();
+
         topic.subscribe((Message message) -> {
             Object payload = parseJson(message.toJsonObject());
             Response r = new ROSResponse(payload);
