@@ -10,9 +10,7 @@ import edu.wpi.rail.jrosbridge.Topic;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Web of Things (WoT) protocol binding for ROS 1, via the
@@ -34,6 +32,14 @@ public class ROSBinding extends BaseProtocolBinding {
     @Override
     public String getProtocol() {
         return ROSBRIDGE_PROTOCOL;
+    }
+
+    @Override
+    public Collection<String> getSupportedSchemes() {
+        Set<String> singleton = new HashSet<>();
+        singleton.add(URI_SCHEME);
+
+        return singleton;
     }
 
     @Override
