@@ -17,7 +17,7 @@ public class ROSBindingTest {
 
     @BeforeAll
     public static void init() {
-        ProtocolBindings.registerBinding(ROSBinding.URI_SCHEME, ROSBinding.class.getName());
+        ProtocolBindings.registerBinding(ROSBinding.class.getName());
     }
 
     @Test

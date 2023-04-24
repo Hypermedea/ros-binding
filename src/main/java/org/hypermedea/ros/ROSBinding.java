@@ -1,6 +1,7 @@
 package org.hypermedea.ros;
 
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
+import ch.unisg.ics.interactions.wot.td.bindings.BaseOperation;
 import ch.unisg.ics.interactions.wot.td.bindings.BaseProtocolBinding;
 import ch.unisg.ics.interactions.wot.td.bindings.InvalidFormException;
 import ch.unisg.ics.interactions.wot.td.bindings.Operation;
@@ -75,10 +76,18 @@ public class ROSBinding extends BaseProtocolBinding {
             Topic t = new Topic(ros, topic, msgType);
 
             switch (operationType) {
-                case TD.writeProperty: return new ROSPublishOperation(t);
-                case TD.observeProperty: return new ROSSubscribeOperation(t);
+                case TD.writeProperty:
+                    BaseOperation publishOp = new ROSPublishOperation(t);
+                    return publishOp;
 
-                default: throw new InvalidFormException(String.format("Operation type not supported by ROS binding: ", operationType));
+                case TD.readProperty:
+                case TD.observeProperty:
+                    BaseOperation subscribeOp = new ROSSubscribeOperation(t);
+                    subscribeOp.setTimeout(0);
+                    return subscribeOp;
+
+                default:
+                    throw new InvalidFormException(String.format("Operation type not supported by ROS binding: ", operationType));
             }
         } catch (URISyntaxException e) {
             throw new InvalidFormException(e);
