@@ -1,7 +1,6 @@
 package org.hypermedea.ros;
 
-import ch.unisg.ics.interactions.wot.td.bindings.Operation;
-import edu.wpi.rail.jrosbridge.Topic;
+import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import edu.wpi.rail.jrosbridge.messages.Message;
 
 import javax.json.JsonObject;
@@ -11,30 +10,36 @@ import java.util.Map;
 
 public class ROSPublishOperation extends ROSOperation {
 
-    private final Topic topic;
-
     private JsonObject payload = null;
 
-    public ROSPublishOperation(Topic topic) {
-        this.topic = topic;
+    public ROSPublishOperation(Form form, String operationType) {
+        super(form, operationType);
     }
 
     /**
-     * Implement {@link Operation#sendRequest()} by publishing to the topic declared in form.
-     * Note that the rosbridge protocol provides no guarantee that the request was indeed
-     * received by the Thing. The operation thus builds an empty response immediately after
-     * sending the request.
-     *
-     * TODO is that true?
+     * Publish message with the provided payload to the topic declared in form.
+     * Note that the <code>rosbridge</code> protocol provides no guarantee that the request was indeed
+     * received by the Thing. The operation thus builds an empty response immediately after sending
+     * the request.
      */
     @Override
     public void sendRequest() throws IOException {
-        if (!topic.getRos().isConnected()) topic.getRos().connect();
+        super.sendRequest();
 
         Message m = payload == null ? new Message() : new Message(payload);
         topic.publish(m);
 
-        onResponse(new ROSResponse());
+        onResponse(new ROSResponse(this));
+    }
+
+    @Override
+    public Object getPayload() {
+        return parseJson(payload);
+    }
+
+    @Override
+    protected String getTopicName(String path) {
+        return path;
     }
 
     @Override
@@ -45,30 +50,6 @@ public class ROSPublishOperation extends ROSOperation {
     @Override
     protected void setArrayPayload(List<Object> payload) {
         this.payload = (JsonObject) buildJson(payload);
-    }
-
-    @Override
-    protected void setStringPayload(String payload) {
-        // TODO wrap payload in object?
-        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
-    }
-
-    @Override
-    protected void setBooleanPayload(Boolean payload) {
-        // TODO wrap payload in object?
-        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
-    }
-
-    @Override
-    protected void setIntegerPayload(Long payload) {
-        // TODO wrap payload in object?
-        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
-    }
-
-    @Override
-    protected void setNumberPayload(Double payload) {
-        // TODO wrap payload in object?
-        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
     }
 
 }

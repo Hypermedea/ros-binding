@@ -1,34 +1,25 @@
 package org.hypermedea.ros;
 
+import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.bindings.Response;
-import ch.unisg.ics.interactions.wot.td.schemas.DataSchema;
-import edu.wpi.rail.jrosbridge.Topic;
 import edu.wpi.rail.jrosbridge.messages.Message;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 public class ROSSubscribeOperation extends ROSOperation {
 
-    private final Topic topic;
-
-    public ROSSubscribeOperation(Topic topic) {
-        this.topic = topic;
-    }
-
-    @Override
-    public void setPayload(DataSchema schema, Object payload) {
-        // TODO warn the payload will be ignored
+    public ROSSubscribeOperation(Form form, String operationType) {
+        super(form, operationType);
     }
 
     @Override
     public void sendRequest() throws IOException {
-        if (!topic.getRos().isConnected()) topic.getRos().connect();
+        super.sendRequest();
 
         topic.subscribe((Message message) -> {
             Object payload = parseJson(message.toJsonObject());
-            Response r = new ROSResponse(payload);
+            Response r = new ROSResponse(payload, ROSSubscribeOperation.this);
 
             onResponse(r);
 
@@ -37,33 +28,18 @@ public class ROSSubscribeOperation extends ROSOperation {
     }
 
     @Override
+    protected String getTopicName(String path) {
+        return path;
+    }
+
+    @Override
+    protected Object getPayload() {
+        return null;
+    }
+
+    @Override
     protected void setObjectPayload(Map<String, Object> payload) {
-        // do nothing
-    }
-
-    @Override
-    protected void setArrayPayload(List<Object> payload) {
-        // do nothing
-    }
-
-    @Override
-    protected void setStringPayload(String payload) {
-        // do nothing
-    }
-
-    @Override
-    protected void setBooleanPayload(Boolean payload) {
-        // do nothing
-    }
-
-    @Override
-    protected void setIntegerPayload(Long payload) {
-        // do nothing
-    }
-
-    @Override
-    protected void setNumberPayload(Double payload) {
-        // do nothing
+        throw new IllegalArgumentException("ROS subscribe operation does not take any input");
     }
 
 }

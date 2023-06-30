@@ -7,7 +7,6 @@ import ch.unisg.ics.interactions.wot.td.bindings.InvalidFormException;
 import ch.unisg.ics.interactions.wot.td.bindings.Operation;
 import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import edu.wpi.rail.jrosbridge.Ros;
-import edu.wpi.rail.jrosbridge.Topic;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -22,8 +21,6 @@ public class ROSBinding extends BaseProtocolBinding {
     public static final String ROSBRIDGE_PROTOCOL = "rosbridge";
 
     public static final String URI_SCHEME = "ros+ws";
-
-    public static final String DEFAULT_MESSAGE_TYPE = "std_msgs/String";
 
     /**
      * ROS connections currently open for known hosts.
@@ -62,29 +59,28 @@ public class ROSBinding extends BaseProtocolBinding {
                 throw new InvalidFormException(String.format("URI unrecognized by ROS binding: %s", form.getTarget()));
             }
 
-            String host = targetURI.getHost();
-            String topic = targetURI.getPath();
-
-            String msgType = (String) form.getAdditionalProperties().get(ROS.messageType);
-            if (msgType == null) msgType = DEFAULT_MESSAGE_TYPE;
-
-            if (!connections.containsKey(host)) {
-                connections.put(host, new Ros(host));
-            }
-
-            Ros ros = connections.get(host);
-            Topic t = new Topic(ros, topic, msgType);
-
             switch (operationType) {
                 case TD.writeProperty:
-                    BaseOperation publishOp = new ROSPublishOperation(t);
+                    BaseOperation publishOp = new ROSPublishOperation(form, operationType);
                     return publishOp;
 
                 case TD.readProperty:
                 case TD.observeProperty:
-                    BaseOperation subscribeOp = new ROSSubscribeOperation(t);
+                    BaseOperation subscribeOp = new ROSSubscribeOperation(form, operationType);
                     subscribeOp.setTimeout(0);
                     return subscribeOp;
+
+                case TD.invokeAction:
+                    BaseOperation sendGoalOp = new ROSSendGoalOperation(form, operationType);
+                    return sendGoalOp;
+
+                case TD.queryAction:
+                    BaseOperation getStatusOp = new ROSGetStatusOperation(form, operationType);
+                    return getStatusOp;
+
+                case TD.cancelAction:
+                    BaseOperation cancelOp = new ROSCancelOperation(form, operationType);
+                    return cancelOp;
 
                 default:
                     throw new InvalidFormException(String.format("Operation type not supported by ROS binding: ", operationType));

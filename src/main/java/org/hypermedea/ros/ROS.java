@@ -6,13 +6,20 @@ package org.hypermedea.ros;
  *   <a href="https://w3c.github.io/wot-binding-templates/">W3C Web of Things (WoT) Binding Templates</a>
  *   specification.
  * </p>
- *
  * <p>
- *   Example:
+ *   Example for basic publish/subscribe, where the path of the target URI corresponds to a topic name:
  *   <code><pre>
  * [] a hctl:Form ;
  *    hctl:target "ros+ws://example.org/turtlesim/cmd_vel" ;
  *    ros:messageType "geometry_msgs/Twist" .
+ *   </pre></code>
+ * </p>
+ * <p>
+ *   Example for <code>actionlib</code> operations, where the path of the target URI corresponds to an action name
+ *   and the URI fragment corresponds to the ID of an on-going action:
+ *   <code><pre>
+ * [] a hctl:Form ;
+ *    hctl:target "ros+ws://example.org/turtle_shape#{id}" .
  *   </pre></code>
  * </p>
  */

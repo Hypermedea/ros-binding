@@ -1,14 +1,66 @@
 package org.hypermedea.ros;
 
+import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import ch.unisg.ics.interactions.wot.td.bindings.BaseOperation;
+import edu.wpi.rail.jrosbridge.Ros;
+import edu.wpi.rail.jrosbridge.Topic;
 
 import javax.json.*;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public abstract class ROSOperation extends BaseOperation {
+
+    public static final String DEFAULT_MESSAGE_TYPE = "std_msgs/String";
+
+    protected final Topic topic;
+
+    public ROSOperation(Form form, String operationType) {
+        super(form, operationType);
+
+        try {
+            URI targetURI = new URI(form.getTarget());
+
+            String host = targetURI.getHost();
+            String topicName = getTopicName(targetURI.getPath());
+
+            String msgType = (String) form.getAdditionalProperties().get(ROS.messageType);
+            if (msgType == null) msgType = getDefaultMessageType();
+
+            Ros ros = new Ros(host);
+
+            topic = new Topic(ros, topicName, msgType);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void sendRequest() throws IOException {
+        if (!topic.getRos().isConnected()) topic.getRos().connect();
+    }
+
+    /**
+     * Map the path element of the operation's target URI to a ROS topic.
+     *
+     * @param path path of the target URI declared in the input form
+     * @return a full topic name for the operation
+     */
+    protected abstract String getTopicName(String path);
+
+    /**
+     * Return the operation-specific default message type.
+     *
+     * @return a message type, e.g. {@value DEFAULT_MESSAGE_TYPE}
+     */
+    protected String getDefaultMessageType() {
+        return DEFAULT_MESSAGE_TYPE;
+    }
 
     protected Object parseJson(JsonStructure json) {
         JsonValue.ValueType vt = json.getValueType();
@@ -23,8 +75,10 @@ public abstract class ROSOperation extends BaseOperation {
 
                 if (v instanceof JsonStructure) parsed = parseJson((JsonStructure) v);
                 else if (v instanceof JsonString) parsed = ((JsonString) v).getString();
-                else if (v instanceof JsonNumber) parsed = ((JsonNumber) v).doubleValue();
-                // FIXME boolean, null values?
+                else if (v instanceof JsonNumber) parsed = parseJsonNumber((JsonNumber) v);
+                else if (v.equals(JsonValue.TRUE)) parsed = new Boolean(true);
+                else if (v.equals(JsonValue.FALSE)) parsed = new Boolean(false);
+                // FIXME null values?
 
                 map.put(kv.getKey(), parsed);
             }
@@ -39,8 +93,10 @@ public abstract class ROSOperation extends BaseOperation {
 
                 if (v instanceof JsonStructure) parsed = parseJson((JsonStructure) v);
                 else if (v instanceof JsonString) parsed = ((JsonString) v).getString();
-                else if (v instanceof JsonNumber) parsed = ((JsonNumber) v).doubleValue();
-                // FIXME boolean, null values?
+                else if (v instanceof JsonNumber) parsed = parseJsonNumber((JsonNumber) v);
+                else if (v.equals(JsonValue.TRUE)) parsed = new Boolean(true);
+                else if (v.equals(JsonValue.FALSE)) parsed = new Boolean(false);
+                // FIXME null values?
 
                 l.add(parsed);
             }
@@ -49,6 +105,11 @@ public abstract class ROSOperation extends BaseOperation {
         } else {
             return null;
         }
+    }
+
+    protected Number parseJsonNumber(JsonNumber nb) {
+        if (nb.isIntegral()) return nb.longValue();
+        else return nb.doubleValue();
     }
 
     protected JsonStructure buildJson(Object ref) {
@@ -84,6 +145,31 @@ public abstract class ROSOperation extends BaseOperation {
         } else {
             return null;
         }
+    }
+
+    @Override
+    protected void setArrayPayload(List<Object> payload) {
+        throw new IllegalArgumentException("JSON array not supported as payload: " + payload);
+    }
+
+    @Override
+    protected void setStringPayload(String payload) {
+        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
+    }
+
+    @Override
+    protected void setBooleanPayload(Boolean payload) {
+        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
+    }
+
+    @Override
+    protected void setIntegerPayload(Long payload) {
+        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
+    }
+
+    @Override
+    protected void setNumberPayload(Double payload) {
+        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
     }
 
 }
