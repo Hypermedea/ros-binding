@@ -11,9 +11,7 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
-java {
-    sourceCompatibility = 11
-}
+sourceCompatibility = "11"
 
 dependencies {
     implementation group: 'edu.wpi.rail', name: 'jrosbridge', version: '0.2.0'
