@@ -76,8 +76,8 @@ public abstract class ROSOperation extends BaseOperation {
                 if (v instanceof JsonStructure) parsed = parseJson((JsonStructure) v);
                 else if (v instanceof JsonString) parsed = ((JsonString) v).getString();
                 else if (v instanceof JsonNumber) parsed = parseJsonNumber((JsonNumber) v);
-                else if (v.equals(JsonValue.TRUE)) parsed = new Boolean(true);
-                else if (v.equals(JsonValue.FALSE)) parsed = new Boolean(false);
+                else if (v.equals(JsonValue.TRUE)) parsed = Boolean.TRUE;
+                else if (v.equals(JsonValue.FALSE)) parsed = Boolean.FALSE;
                 // FIXME null values?
 
                 map.put(kv.getKey(), parsed);
@@ -94,8 +94,8 @@ public abstract class ROSOperation extends BaseOperation {
                 if (v instanceof JsonStructure) parsed = parseJson((JsonStructure) v);
                 else if (v instanceof JsonString) parsed = ((JsonString) v).getString();
                 else if (v instanceof JsonNumber) parsed = parseJsonNumber((JsonNumber) v);
-                else if (v.equals(JsonValue.TRUE)) parsed = new Boolean(true);
-                else if (v.equals(JsonValue.FALSE)) parsed = new Boolean(false);
+                else if (v.equals(JsonValue.TRUE)) parsed = Boolean.TRUE;
+                else if (v.equals(JsonValue.FALSE)) parsed = Boolean.FALSE;
                 // FIXME null values?
 
                 l.add(parsed);
