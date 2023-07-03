@@ -5,8 +5,6 @@ import ch.unisg.ics.interactions.wot.td.bindings.InvalidFormException;
 import ch.unisg.ics.interactions.wot.td.bindings.Response;
 import edu.wpi.rail.jrosbridge.messages.Message;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
 import javax.json.JsonStructure;
 import javax.json.JsonValue;
 import java.io.IOException;
@@ -16,8 +14,6 @@ import java.util.Map;
 import java.util.Optional;
 
 public class ROSGetStatusOperation extends ROSOperation {
-
-    public static final String GOAL_STATUS_ARRAY_MESSAGE_TYPE = "actionlib_msgs/GoalStatusArray";
 
     private final String id;
 
@@ -41,6 +37,7 @@ public class ROSGetStatusOperation extends ROSOperation {
      *     If the action is not in the status array sent by the action server, a response
      *     with status "Consumer error" is returned (analogous to HTTP's 404 Not Found).
      *     Otherwise, an object with key <code>status</code> is returned. See
+     *     {@link ROSGoalStatusArrayWrapper.GoalStatus} and
      *     <a href="http://docs.ros.org/en/api/actionlib_msgs/html/msg/GoalStatus.html"><code>actionlib_msgs/GoalStatus</code></a>
      *     for more details on possible status codes.
      * </p>
@@ -55,12 +52,8 @@ public class ROSGetStatusOperation extends ROSOperation {
         super.sendRequest();
 
         topic.subscribe((Message msg) -> {
-            JsonArray l = msg.toJsonObject().getJsonArray("status_list");
-
-            Optional<JsonValue> statusOpt = l.stream().filter(status -> {
-                String goalId = ((JsonObject) status).getJsonObject("goal_id").getString("id");
-                return goalId.equals(id);
-            }).findAny();
+            ROSGoalStatusArrayWrapper wrapper = new ROSGoalStatusArrayWrapper(msg);
+            Optional<JsonValue> statusOpt = wrapper.getFullStatus(id);
 
             Response r;
 
@@ -84,7 +77,7 @@ public class ROSGetStatusOperation extends ROSOperation {
 
     @Override
     protected String getDefaultMessageType() {
-        return GOAL_STATUS_ARRAY_MESSAGE_TYPE;
+        return ROSGoalStatusArrayWrapper.GOAL_STATUS_ARRAY_MESSAGE_TYPE;
     }
 
     @Override

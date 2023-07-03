@@ -1,6 +1,7 @@
 package org.hypermedea.ros;
 
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
+import edu.wpi.rail.jrosbridge.Topic;
 import edu.wpi.rail.jrosbridge.messages.Message;
 
 import javax.json.Json;
@@ -8,10 +9,11 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
 public class ROSSendGoalOperation extends ROSOperation {
 
-    private static long counter = 0;
+    private static final long TIMEOUT = 60l;
 
     private JsonObject payload;
 
@@ -28,8 +30,8 @@ public class ROSSendGoalOperation extends ROSOperation {
      *     given as URI fragment).
      * </p>
      * <p>
-     *     The current implementation provides no guarantee that the action server accepted the request.
-     *     This may change in the future.
+     *     The current implementation returns a response as soon as the action server acknowledges
+     *     the request and provides a status code for it (see {@link ROSGetStatusOperation}).
      * </p>
      *
      * @throws IOException
@@ -40,15 +42,33 @@ public class ROSSendGoalOperation extends ROSOperation {
 
         JsonObject goal = wrapPayload(payload);
 
+        String id = goal.getJsonObject("goal_id").getString("id");
+
+        long requestTime = System.currentTimeMillis();
+
+        String statusTopicName = topic.getName().replaceFirst("/goal$", "/status");
+        String msgType = ROSGoalStatusArrayWrapper.GOAL_STATUS_ARRAY_MESSAGE_TYPE;
+        Topic statusTopic = new Topic(topic.getRos(), statusTopicName, msgType);
+        statusTopic.subscribe((Message msg) -> {
+            ROSGoalStatusArrayWrapper wrapper = new ROSGoalStatusArrayWrapper(msg);
+            Optional<ROSGoalStatusArrayWrapper.GoalStatus> statusOpt = wrapper.getStatus(id);
+
+            if (statusOpt.isEmpty()) {
+                long delay = System.currentTimeMillis() - requestTime;
+                if (delay > TIMEOUT * 1000) onError();
+            } else {
+                ROSResponse res = new ROSResponse(this);
+                res.addLink("", form.getTarget() + "#" + id);
+
+                statusTopic.unsubscribe();
+
+                onResponse(res);
+            }
+
+        });
+
         Message msg = new Message(goal);
         topic.publish(msg);
-
-        String id = goal.getJsonObject("goal_id").getString("id");
-        ROSResponse res = new ROSResponse(this);
-        res.addLink("", form.getTarget() + "#" + id);
-
-        // TODO instead, subscribe to feedback and wait for status to equal ACTIVE
-        onResponse(res);
     }
 
     @Override
