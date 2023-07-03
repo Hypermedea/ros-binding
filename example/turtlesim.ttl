@@ -1,0 +1,75 @@
+@prefix td: <https://www.w3.org/2019/wot/td#> .
+@prefix hctl: <https://www.w3.org/2019/wot/hypermedia#> .
+@prefix js: <https://www.w3.org/2019/wot/json-schema#> .
+@prefix wotsec: <https://www.w3.org/2019/wot/security#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rosv: <http://example.org/ros-binding#> .
+
+<urn:ex:turtle> a td:Thing ;
+                td:title "Turtle" ;
+                td:hasPropertyAffordance _:cmd_vel ;
+                td:hasActionAffordance _:turtle_shape ;
+                td:hasSecurityConfiguration [ a wotsec:NoSecurityScheme ] .
+
+_:cmd_vel a td:PropertyAffordance ;
+          td:name "cmd_vel" ;
+          js:properties [
+            a js:ObjectSchema ;
+            js:properties [
+              a js:ObjectSchema ;
+              js:propertyName "linear" ;
+              js:properties [
+                a js:NumberSchema ;
+                js:propertyName "x"
+              ], [
+                a js:NumberSchema ;
+                js:propertyName "y"
+              ], [
+                a js:NumberSchema ;
+                js:propertyName "z"
+              ]
+            ], [
+              a js:ObjectSchema ;
+              js:propertyName "angular" ;
+              js:properties [
+                a js:NumberSchema ;
+                js:propertyName "x"
+              ], [
+                a js:NumberSchema ;
+                js:propertyName "y"
+              ], [
+                a js:NumberSchema ;
+                js:propertyName "z"
+              ]
+            ]
+          ] ;
+          td:hasForm [
+            hctl:hasTarget <ros+ws://localhost:9090/turtle1/pose> ;
+            hctl:hasOperationType td:observeProperty ;
+            hctl:forContentType "application/json" ;
+            rosv:messageType "turtlesim/Pose" ;
+            rosv:methodName "subscribe"
+          ], [
+            hctl:hasTarget <ros+ws://localhost:9090/turtle1/cmd_vel> ;
+            hctl:hasOperationType td:writeProperty ;
+            hctl:forContentType "application/json" ;
+            rosv:messageType "geometry_msgs/Twist" ;
+            rosv:methodName "publish"
+          ] .
+
+_:turtle_shape a td:ActionAffordance ;
+               td:name "turtle_shape" ;
+               td:hasInputSchema [
+                 a js:ObjectSchema
+                 # add edges and radius defs
+               ] ;
+               td:hasForm [
+                 hctl:hasTarget <ros+ws://localhost:9090/turtle_shape> ;
+                 hctl:hasOperationType td:invokeAction ;
+               ], [
+                 hctl:hasTarget <ros+ws://localhost:9090/turtle_shape#{goalId}> ;
+                 hctl:hasOperationType td:queryAction ;
+               ], [
+                 hctl:hasTarget <ros+ws://localhost:9090/turtle_shape#{goalId}> ;
+                 hctl:hasOperationType td:cancelAction ;
+               ] .
