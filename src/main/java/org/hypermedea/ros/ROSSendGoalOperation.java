@@ -1,6 +1,7 @@
 package org.hypermedea.ros;
 
 import ch.unisg.ics.interactions.wot.td.affordances.Form;
+import ch.unisg.ics.interactions.wot.td.bindings.Response;
 import edu.wpi.rail.jrosbridge.Topic;
 import edu.wpi.rail.jrosbridge.messages.Message;
 
@@ -57,7 +58,35 @@ public class ROSSendGoalOperation extends ROSOperation {
                 long delay = System.currentTimeMillis() - requestTime;
                 if (delay > TIMEOUT * 1000) onError();
             } else {
-                ROSResponse res = new ROSResponse(this);
+                ROSGoalStatusArrayWrapper.GoalStatus rosStatus = statusOpt.get();
+
+                Response.ResponseStatus status;
+                switch (rosStatus) {
+                    case PENDING:
+                    case ACTIVE:
+                    case PREEMPTED:
+                    case SUCCEEDED:
+                    case RECALLED:
+                    case PREEMPTING:
+                    case RECALLING:
+                        status = Response.ResponseStatus.OK;
+                        break;
+
+                    case REJECTED:
+                        status = Response.ResponseStatus.CONSUMER_ERROR;
+                        break;
+
+                    case ABORTED:
+                        status = Response.ResponseStatus.THING_ERROR;
+                        break;
+
+                    case LOST:
+                    default:
+                        status = Response.ResponseStatus.UNKNOWN_ERROR;
+                        break;
+                }
+
+                ROSResponse res = new ROSResponse(status, this);
                 res.addLink("", form.getTarget() + "#" + id);
 
                 statusTopic.unsubscribe();
