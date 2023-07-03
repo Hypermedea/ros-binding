@@ -12,6 +12,7 @@ repositories {
 }
 
 sourceCompatibility = "11"
+targetCompatibility = "8"
 
 dependencies {
     implementation group: 'edu.wpi.rail', name: 'jrosbridge', version: '0.2.0'
