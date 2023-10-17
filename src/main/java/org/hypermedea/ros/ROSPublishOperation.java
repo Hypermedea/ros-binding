@@ -1,19 +1,16 @@
 package org.hypermedea.ros;
 
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
 import edu.wpi.rail.jrosbridge.messages.Message;
+import org.hypermedea.ct.RepresentationHandlers;
 
-import javax.json.JsonObject;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 public class ROSPublishOperation extends ROSOperation {
 
-    private JsonObject payload = null;
-
-    public ROSPublishOperation(Form form, String operationType) {
-        super(form, operationType);
+    public ROSPublishOperation(String targetURI, Map<String, Object> formFields) {
+        super(targetURI, formFields);
     }
 
     /**
@@ -23,33 +20,21 @@ public class ROSPublishOperation extends ROSOperation {
      * the request.
      */
     @Override
-    public void sendRequest() throws IOException {
-        super.sendRequest();
+    protected void sendSingleRequest() throws IOException {
+        super.sendSingleRequest();
 
-        Message m = payload == null ? new Message() : new Message(payload);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        RepresentationHandlers.serialize(payload, out, target);
+
+        Message m = payload.isEmpty() ? new Message() : new Message(out.toString());
         topic.publish(m);
 
         onResponse(new ROSResponse(this));
     }
 
     @Override
-    public Object getPayload() {
-        return parseJson(payload);
-    }
-
-    @Override
     protected String getTopicName(String path) {
         return path;
-    }
-
-    @Override
-    protected void setObjectPayload(Map<String, Object> payload) {
-        this.payload = (JsonObject) buildJson(payload);
-    }
-
-    @Override
-    protected void setArrayPayload(List<Object> payload) {
-        this.payload = (JsonObject) buildJson(payload);
     }
 
 }

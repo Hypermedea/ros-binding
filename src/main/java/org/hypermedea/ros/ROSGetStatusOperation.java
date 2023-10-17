@@ -1,12 +1,10 @@
 package org.hypermedea.ros;
 
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.bindings.InvalidFormException;
-import ch.unisg.ics.interactions.wot.td.bindings.Response;
 import edu.wpi.rail.jrosbridge.messages.Message;
+import org.hypermedea.op.InvalidFormException;
+import org.hypermedea.op.Response;
 
-import javax.json.JsonStructure;
-import javax.json.JsonValue;
+import javax.json.JsonObject;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,11 +15,11 @@ public class ROSGetStatusOperation extends ROSOperation {
 
     private final String id;
 
-    public ROSGetStatusOperation(Form form, String operationType) {
-        super(form, operationType);
+    public ROSGetStatusOperation(String targetURI, Map<String, Object> formFields) {
+        super(targetURI, formFields);
 
         try {
-            URI uri = new URI(form.getTarget());
+            URI uri = new URI(targetURI);
             id = uri.getFragment();
         } catch (URISyntaxException e) {
             throw new InvalidFormException(e);
@@ -48,21 +46,20 @@ public class ROSGetStatusOperation extends ROSOperation {
      * @throws IOException
      */
     @Override
-    public void sendRequest() throws IOException {
-        super.sendRequest();
+    protected void sendSingleRequest() throws IOException {
+        super.sendSingleRequest();
 
         topic.subscribe((Message msg) -> {
             ROSGoalStatusArrayWrapper wrapper = new ROSGoalStatusArrayWrapper(msg);
-            Optional<JsonValue> statusOpt = wrapper.getFullStatus(id);
+            Optional<JsonObject> statusOpt = wrapper.getFullStatus(id);
 
             Response r;
 
             if (statusOpt.isPresent()) {
-                JsonValue status = statusOpt.get();
-                Object payload = parseJson((JsonStructure) status);
-                r = new ROSResponse(payload, ROSGetStatusOperation.this);
+                JsonObject status = statusOpt.get();
+                r = new ROSResponse(status, ROSGetStatusOperation.this);
             } else {
-                r = new ROSResponse(Response.ResponseStatus.CONSUMER_ERROR, ROSGetStatusOperation.this);
+                r = new ROSResponse(Response.ResponseStatus.CLIENT_ERROR, ROSGetStatusOperation.this);
             }
 
             onResponse(r);
@@ -78,16 +75,6 @@ public class ROSGetStatusOperation extends ROSOperation {
     @Override
     protected String getDefaultMessageType() {
         return ROSGoalStatusArrayWrapper.GOAL_STATUS_ARRAY_MESSAGE_TYPE;
-    }
-
-    @Override
-    protected Object getPayload() {
-        return null;
-    }
-
-    @Override
-    protected void setObjectPayload(Map<String, Object> payload) {
-
     }
 
 }

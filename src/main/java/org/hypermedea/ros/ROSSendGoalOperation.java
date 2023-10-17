@@ -1,13 +1,15 @@
 package org.hypermedea.ros;
 
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.bindings.Response;
 import edu.wpi.rail.jrosbridge.Topic;
 import edu.wpi.rail.jrosbridge.messages.Message;
+import org.hypermedea.ct.RepresentationHandlers;
+import org.hypermedea.op.Response;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
@@ -16,10 +18,8 @@ public class ROSSendGoalOperation extends ROSOperation {
 
     private static final long TIMEOUT = 60l;
 
-    private JsonObject payload;
-
-    public ROSSendGoalOperation(Form form, String operationType) {
-        super(form, operationType);
+    public ROSSendGoalOperation(String targetURI, Map<String, Object> formFields) {
+        super(targetURI, formFields);
     }
 
     /**
@@ -38,10 +38,15 @@ public class ROSSendGoalOperation extends ROSOperation {
      * @throws IOException
      */
     @Override
-    public void sendRequest() throws IOException {
-        super.sendRequest();
+    protected void sendSingleRequest() throws IOException {
+        super.sendSingleRequest();
 
-        JsonObject goal = wrapPayload(payload);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        RepresentationHandlers.serialize(payload, out, target);
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+
+        JsonObject p = Json.createReader(in).readObject();
+        JsonObject goal = wrapPayload(p);
 
         String id = goal.getJsonObject("goal_id").getString("id");
 
@@ -73,11 +78,11 @@ public class ROSSendGoalOperation extends ROSOperation {
                         break;
 
                     case REJECTED:
-                        status = Response.ResponseStatus.CONSUMER_ERROR;
+                        status = Response.ResponseStatus.CLIENT_ERROR;
                         break;
 
                     case ABORTED:
-                        status = Response.ResponseStatus.THING_ERROR;
+                        status = Response.ResponseStatus.SERVER_ERROR;
                         break;
 
                     case LOST:
@@ -87,7 +92,7 @@ public class ROSSendGoalOperation extends ROSOperation {
                 }
 
                 ROSResponse res = new ROSResponse(status, this);
-                res.addLink("", form.getTarget() + "#" + id);
+                res.addLink(ROS.goalId, target + "#" + id);
 
                 statusTopic.unsubscribe();
 
@@ -106,16 +111,6 @@ public class ROSSendGoalOperation extends ROSOperation {
         return path + "goal";
     }
 
-    @Override
-    protected Object getPayload() {
-        return null;
-    }
-
-    @Override
-    protected void setObjectPayload(Map<String, Object> payload) {
-        this.payload = (JsonObject) buildJson(payload);
-    }
-
     private JsonObject wrapPayload(JsonObject payload) {
         long time = System.currentTimeMillis();
         long secs = time / 1000;
@@ -132,7 +127,7 @@ public class ROSSendGoalOperation extends ROSOperation {
         JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("goal_id", meta);
 
-        if (payload != null) builder.add ("goal", payload);
+        if (payload != null) builder.add("goal", payload);
 
         return builder.build();
     }

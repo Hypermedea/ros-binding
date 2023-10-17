@@ -1,8 +1,7 @@
 package org.hypermedea.ros;
 
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.bindings.InvalidFormException;
 import edu.wpi.rail.jrosbridge.messages.Message;
+import org.hypermedea.op.InvalidFormException;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -22,11 +21,11 @@ public class ROSCancelOperation extends ROSOperation {
 
     private final String id;
 
-    public ROSCancelOperation(Form form, String operationType) {
-        super(form, operationType);
+    public ROSCancelOperation(String targetURI, Map<String, Object> formFields) {
+        super(targetURI, formFields);
 
         try {
-            URI uri = new URI(form.getTarget());
+            URI uri = new URI(targetURI);
             id = uri.getFragment();
         } catch (URISyntaxException e) {
             throw new InvalidFormException(e);
@@ -42,8 +41,8 @@ public class ROSCancelOperation extends ROSOperation {
      * @throws IOException
      */
     @Override
-    public void sendRequest() throws IOException {
-        super.sendRequest();
+    protected void sendSingleRequest() throws IOException {
+        super.sendSingleRequest();
 
         JsonObjectBuilder builder = Json.createObjectBuilder();
         builder.add("id", id);
@@ -61,16 +60,6 @@ public class ROSCancelOperation extends ROSOperation {
     protected String getTopicName(String path) {
         if (!path.endsWith("/")) path += "/";
         return path + "cancel";
-    }
-
-    @Override
-    protected Object getPayload() {
-        return null;
-    }
-
-    @Override
-    protected void setObjectPayload(Map<String, Object> payload) {
-        throw new IllegalArgumentException("ROS cancel operation does not take any input");
     }
 
 }

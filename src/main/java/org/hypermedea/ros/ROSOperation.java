@@ -1,9 +1,8 @@
 package org.hypermedea.ros;
 
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.bindings.BaseOperation;
 import edu.wpi.rail.jrosbridge.Ros;
 import edu.wpi.rail.jrosbridge.Topic;
+import org.hypermedea.op.BaseOperation;
 
 import javax.json.*;
 import java.io.IOException;
@@ -20,16 +19,16 @@ public abstract class ROSOperation extends BaseOperation {
 
     protected final Topic topic;
 
-    public ROSOperation(Form form, String operationType) {
-        super(form, operationType);
+    public ROSOperation(String targetURI, Map<String, Object> formFields) {
+        super(targetURI, formFields);
 
         try {
-            URI targetURI = new URI(form.getTarget());
+            URI uri = new URI(targetURI);
 
-            String host = targetURI.getHost();
-            String topicName = getTopicName(targetURI.getPath());
+            String host = uri.getHost();
+            String topicName = getTopicName(uri.getPath());
 
-            String msgType = (String) form.getAdditionalProperties().get(ROS.messageType);
+            String msgType = (String) form.get(ROS.messageType);
             if (msgType == null) msgType = getDefaultMessageType();
 
             Ros ros = new Ros(host);
@@ -41,7 +40,7 @@ public abstract class ROSOperation extends BaseOperation {
     }
 
     @Override
-    public void sendRequest() throws IOException {
+    protected void sendSingleRequest() throws IOException {
         if (!topic.getRos().isConnected()) topic.getRos().connect();
     }
 
@@ -145,31 +144,6 @@ public abstract class ROSOperation extends BaseOperation {
         } else {
             return null;
         }
-    }
-
-    @Override
-    protected void setArrayPayload(List<Object> payload) {
-        throw new IllegalArgumentException("JSON array not supported as payload: " + payload);
-    }
-
-    @Override
-    protected void setStringPayload(String payload) {
-        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
-    }
-
-    @Override
-    protected void setBooleanPayload(Boolean payload) {
-        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
-    }
-
-    @Override
-    protected void setIntegerPayload(Long payload) {
-        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
-    }
-
-    @Override
-    protected void setNumberPayload(Double payload) {
-        throw new IllegalArgumentException("Primitive JSON value not supported as payload: " + payload);
     }
 
 }

@@ -1,18 +1,21 @@
 package org.hypermedea.ros;
 
-import ch.unisg.ics.interactions.wot.td.affordances.Link;
-import ch.unisg.ics.interactions.wot.td.bindings.BaseResponse;
-import ch.unisg.ics.interactions.wot.td.bindings.Operation;
+import jason.asSyntax.Literal;
+import org.hypermedea.ct.RepresentationHandlers;
+import org.hypermedea.ct.json.JsonHandler;
+import org.hypermedea.op.BaseResponse;
 
-import java.util.*;
+import javax.json.JsonObject;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
 
 public class ROSResponse extends BaseResponse {
 
-    private final ResponseStatus status;
+    private ResponseStatus status;
 
-    private final Optional<Object> payload;
-
-    private final Collection<Link> links = new HashSet<>();
+    private Collection<Literal> payload = new HashSet<>();
 
     public ROSResponse(ROSOperation op) {
         this(ResponseStatus.OK, op);
@@ -22,24 +25,32 @@ public class ROSResponse extends BaseResponse {
         super(op);
 
         this.status = status;
-        this.payload = Optional.empty();
     }
 
-    public ROSResponse(Object payload, ROSOperation op) {
+    public ROSResponse(JsonObject payload, ROSOperation op) {
         super(op);
 
-        this.status = ResponseStatus.OK;
-        this.payload = Optional.of(payload);
+        try {
+            ByteArrayInputStream in = new ByteArrayInputStream(payload.toString().getBytes());
+            this.payload = RepresentationHandlers.deserialize(in, op.getTargetURI(), JsonHandler.APPLICATION_JSON_CT);
+
+            this.status = ResponseStatus.OK;
+        } catch (IOException e) {
+            // TODO log error
+            this.status = ResponseStatus.SERVER_ERROR;
+        }
     }
 
     public void addLink(String relationType, String target) {
-        Link l = new Link(target, relationType);
-        links.add(l);
-    }
+        String t = String.format("<> <%s> <%s> .", relationType, target);
 
-    @Override
-    public Operation getOperation() {
-        return null;
+        ByteArrayInputStream in = new ByteArrayInputStream(t.getBytes());
+        try {
+            Collection<Literal> l = RepresentationHandlers.deserialize(in, operation.getTargetURI(), "text/turtle");
+            payload.addAll(l);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -48,13 +59,8 @@ public class ROSResponse extends BaseResponse {
     }
 
     @Override
-    public Optional<Object> getPayload() {
+    public Collection<Literal> getPayload() {
         return payload;
-    }
-
-    @Override
-    public Collection<Link> getLinks() {
-        return links;
     }
 
 }

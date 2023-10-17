@@ -29,4 +29,6 @@ public class ROS {
 
     public static final String messageType = NAMESPACE + "messageType";
 
+    public static final String goalId = NAMESPACE + "goalId";
+
 }

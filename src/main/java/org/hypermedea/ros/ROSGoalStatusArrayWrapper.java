@@ -40,19 +40,24 @@ public class ROSGoalStatusArrayWrapper {
         array = msg.toJsonObject().getJsonArray("status_list");
     }
 
-    public Optional<JsonValue> getFullStatus(String goalId) {
-        return array.stream().filter(status -> {
+    public Optional<JsonObject> getFullStatus(String goalId) {
+        Optional<JsonValue> val = array.stream().filter(status -> {
+            if (!status.getValueType().equals(JsonValue.ValueType.OBJECT)) return false;
+
             String id = ((JsonObject) status).getJsonObject("goal_id").getString("id");
             return id.equals(goalId);
         }).findAny();
+
+        if (val.isEmpty()) return Optional.empty();
+        else return Optional.of((JsonObject) val.get());
     }
 
     public Optional<GoalStatus> getStatus(String goalId) {
-        Optional<JsonValue> opt = getFullStatus(goalId);
+        Optional<JsonObject> opt = getFullStatus(goalId);
 
         if (opt.isEmpty()) return Optional.empty();
 
-        JsonObject fullStatus = (JsonObject) opt.get();
+        JsonObject fullStatus = opt.get();
         int statusCode = fullStatus.getInt("status");
 
         switch (statusCode) {

@@ -1,12 +1,10 @@
 package org.hypermedea.ros;
 
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.bindings.BaseOperation;
-import ch.unisg.ics.interactions.wot.td.bindings.BaseProtocolBinding;
-import ch.unisg.ics.interactions.wot.td.bindings.InvalidFormException;
-import ch.unisg.ics.interactions.wot.td.bindings.Operation;
-import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
 import edu.wpi.rail.jrosbridge.Ros;
+import org.hypermedea.op.BaseOperation;
+import org.hypermedea.op.BaseProtocolBinding;
+import org.hypermedea.op.InvalidFormException;
+import org.hypermedea.op.Operation;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -41,49 +39,52 @@ public class ROSBinding extends BaseProtocolBinding {
     }
 
     @Override
-    public Optional<String> getDefaultMethod(String operationType) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Optional<String> getDefaultSubProtocol(String operationType) {
-        return Optional.empty();
-    }
-
-    @Override
-    public Operation bind(Form form, String operationType) {
+    public Operation bind(String targetURI, Map<String, Object> formFields) {
         try {
-            URI targetURI = new URI(form.getTarget());
+            URI uri = new URI(targetURI);
 
-            if (!targetURI.getScheme().equals(URI_SCHEME)) {
-                throw new InvalidFormException(String.format("URI unrecognized by ROS binding: %s", form.getTarget()));
+            if (!uri.getScheme().equals(URI_SCHEME)) {
+                throw new InvalidFormException(String.format("URI unrecognized by ROS binding: %s", targetURI));
             }
 
-            switch (operationType) {
-                case TD.writeProperty:
-                    BaseOperation publishOp = new ROSPublishOperation(form, operationType);
-                    return publishOp;
+            String method = (String) formFields.get(Operation.METHOD_NAME_FIELD);
+            String id = uri.getFragment();
 
-                case TD.readProperty:
-                case TD.observeProperty:
-                    BaseOperation subscribeOp = new ROSSubscribeOperation(form, operationType);
-                    subscribeOp.setTimeout(0);
-                    return subscribeOp;
+            if (uri.getFragment() == null || id.isEmpty()) {
+                switch (method) {
+                    case Operation.PUT:
+                        BaseOperation publishOp = new ROSPublishOperation(targetURI, formFields);
+                        return publishOp;
 
-                case TD.invokeAction:
-                    BaseOperation sendGoalOp = new ROSSendGoalOperation(form, operationType);
-                    return sendGoalOp;
+                    case Operation.GET:
+                    case Operation.WATCH:
+                        BaseOperation subscribeOp = new ROSSubscribeOperation(targetURI, formFields);
+                        subscribeOp.setTimeout(0);
+                        return subscribeOp;
 
-                case TD.queryAction:
-                    BaseOperation getStatusOp = new ROSGetStatusOperation(form, operationType);
-                    return getStatusOp;
+                    case Operation.POST:
+                        BaseOperation sendGoalOp = new ROSSendGoalOperation(targetURI, formFields);
+                        return sendGoalOp;
 
-                case TD.cancelAction:
-                    BaseOperation cancelOp = new ROSCancelOperation(form, operationType);
-                    return cancelOp;
+                    case Operation.DELETE:
+                        throw new InvalidFormException("Non-action resources cannot be deleted in ROS");
 
-                default:
-                    throw new InvalidFormException(String.format("Operation type not supported by ROS binding: ", operationType));
+                    default:
+                        throw new InvalidFormException(String.format("Method not supported by ROS binding for non-action resources: ", method));
+                }
+            } else {
+                switch (method) {
+                    case Operation.GET:
+                        BaseOperation getStatusOp = new ROSGetStatusOperation(targetURI, formFields);
+                        return getStatusOp;
+
+                    case Operation.DELETE:
+                        BaseOperation cancelOp = new ROSCancelOperation(targetURI, formFields);
+                        return cancelOp;
+
+                    default:
+                        throw new InvalidFormException(String.format("Method not supported by ROS binding for action resources: ", method));
+                }
             }
         } catch (URISyntaxException e) {
             throw new InvalidFormException(e);

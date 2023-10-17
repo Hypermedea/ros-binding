@@ -1,14 +1,25 @@
 package org.hypermedea.ros;
 
-import ch.unisg.ics.interactions.wot.td.affordances.Form;
-import ch.unisg.ics.interactions.wot.td.affordances.Link;
-import ch.unisg.ics.interactions.wot.td.bindings.*;
-import ch.unisg.ics.interactions.wot.td.schemas.ObjectSchema;
-import ch.unisg.ics.interactions.wot.td.vocabularies.TD;
+import jason.asSyntax.Literal;
+import org.hypermedea.ct.RepresentationHandlers;
+import org.hypermedea.ct.json.JsonHandler;
+import org.hypermedea.op.BaseOperation;
+import org.hypermedea.op.Operation;
+import org.hypermedea.op.ProtocolBindings;
+import org.hypermedea.op.Response;
+import org.hypermedea.tools.Identifiers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import javax.json.Json;
+import javax.json.JsonNumber;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.StringReader;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -24,31 +35,22 @@ public class ROSBindingTest {
 
     @Test
     public void testPublish() throws IOException {
-        Form f = new Form.Builder("ros+ws://localhost:9090/turtle1/cmd_vel")
-                .addProperty(ROS.messageType, "geometry_msgs/Twist")
-                .build();
+        String uri = "ros+ws://localhost:9090/turtle1/cmd_vel";
 
-        ProtocolBinding b = ProtocolBindings.getBinding(f);
-        Operation op = b.bind(f, TD.writeProperty);
+        Map<String, Object> form = new HashMap<>();
+        form.put(ROS.messageType, "geometry_msgs/Twist");
+        form.put(Operation.METHOD_NAME_FIELD, Operation.PUT);
+
+        Operation op = ProtocolBindings.bind(uri, form);
 
         assertInstanceOf(ROSPublishOperation.class, op);
 
-        Map<String, Object> linearVel = new HashMap<>();
-        linearVel.put("x", -2.0);
-        linearVel.put("y", 0.0);
-        linearVel.put("z", 0.0);
+       String twist = "{\n" +
+               "  \"linear\": { \"x\":-2.0, \"y\": 0.0, \"z\": 0.0 },\n" +
+               "  \"angular\": { \"x\":0.0, \"y\": 0.0, \"z\": 0.0 }\n" +
+               "}";
 
-        Map<String, Object> angularVel = new HashMap<>();
-        angularVel.put("x", 0.0);
-        angularVel.put("y", 0.0);
-        angularVel.put("z", 0.0);
-
-        Map<String, Object> payload = new HashMap<>();
-
-        payload.put("linear", linearVel);
-        payload.put("angular", angularVel);
-
-        op.setPayload(new ObjectSchema.Builder().build(), payload);
+        setJsonPayload(op, twist);
 
         op.sendRequest();
         Response r = op.getResponse();
@@ -58,12 +60,13 @@ public class ROSBindingTest {
 
     @Test
     public void testSubscribe() throws IOException {
-        Form f = new Form.Builder("ros+ws://localhost:9090/turtle1/pose")
-                .addProperty(ROS.messageType, "turtlesim/Pose")
-                .build();
+        String uri = "ros+ws://localhost:9090/turtle1/pose";
 
-        ProtocolBinding b = ProtocolBindings.getBinding(f);
-        Operation op = b.bind(f, TD.observeProperty);
+        Map<String, Object> form = new HashMap<>();
+        form.put(ROS.messageType, "turtlesim/Pose");
+        form.put(Operation.METHOD_NAME_FIELD, Operation.WATCH);
+
+        Operation op = ProtocolBindings.bind(uri, form);
 
         ((BaseOperation) op).setTimeout(2);
 
@@ -74,45 +77,55 @@ public class ROSBindingTest {
         Response response = op.getResponse();
 
         assertEquals(Response.ResponseStatus.OK, response.getStatus());
-        assertTrue(response.getPayload().isPresent());
 
-        Map<String, Object> json = (Map<String, Object>) response.getPayload().get();
-        assertTrue(json.containsKey("x"));
-        assertInstanceOf(Double.class, json.get("x"));
+        assertFalse(response.getPayload().isEmpty());
+
+        JsonObject pose = getJsonPayload(response);
+
+        assertTrue(pose.containsKey("x"));
+        assertInstanceOf(JsonNumber.class, pose.get("x"));
     }
 
     @Test
     public void testAction() throws IOException {
-        Form f1 = new Form.Builder("ros+ws://localhost:9090/turtle_shape").build();
+        String uri = "ros+ws://localhost:9090/turtle_shape";
 
-        ProtocolBinding b = ProtocolBindings.getBinding(f1);
-        Operation sendGoal = b.bind(f1, TD.invokeAction);
+        Map<String, Object> form = new HashMap<>();
+        form.put(Operation.METHOD_NAME_FIELD, Operation.POST);
+
+        Operation sendGoal = ProtocolBindings.bind(uri, form);
 
         assertInstanceOf(ROSSendGoalOperation.class, sendGoal);
 
-        Map<String, Object> goal = new HashMap<>();
-        goal.put("edges", 4l);
-        goal.put("radius", Math.PI / 2);
-        sendGoal.setPayload(new ObjectSchema.Builder().build(), goal);
+        String goal = "{\n" +
+                "  \"edges\": 4,\n" +
+                "  \"radius\": 1.57\n" +
+                "}";
+
+        setJsonPayload(sendGoal, goal);
 
         sendGoal.sendRequest();
         Response response = sendGoal.getResponse();
 
-        assertTrue(response.getPayload().isEmpty());
+        assertTrue(sendGoal.getPayload().size() == 1);
 
-        Optional<Link> linkToAction = response.getLinks().stream().findFirst();
+        Optional<Literal> linkToAction = response.getPayload().stream().findAny();
 
         assertTrue(linkToAction.isPresent());
 
-        String rel = linkToAction.get().getRelationType();
-        String target = linkToAction.get().getTarget();
+        String rel = Identifiers.getLexicalForm(linkToAction.get().getTerm(1));
+        String actionURI = Identifiers.getLexicalForm(linkToAction.get().getTerm(2));
 
-        assertTrue(rel.isEmpty());
+        assertTrue(rel.equals(ROS.goalId));
 
-        Form f2 = new Form.Builder(target).build();
+        HashMap<String, Object> form1 = new HashMap<>();
+        HashMap<String, Object> form2 = new HashMap<>();
 
-        Operation getStatus = b.bind(f2, TD.queryAction);
-        Operation cancel = b.bind(f2, TD.cancelAction);
+        form1.put(Operation.METHOD_NAME_FIELD, Operation.GET);
+        form2.put(Operation.METHOD_NAME_FIELD, Operation.DELETE);
+
+        Operation getStatus = ProtocolBindings.bind(actionURI, form1);
+        Operation cancel = ProtocolBindings.bind(actionURI, form2);
 
         assertInstanceOf(ROSGetStatusOperation.class, getStatus);
         assertInstanceOf(ROSCancelOperation.class, cancel);
@@ -120,11 +133,9 @@ public class ROSBindingTest {
         getStatus.sendRequest();
         Response status = getStatus.getResponse();
 
-        assertTrue(status.getPayload().isPresent());
+        assertFalse(status.getPayload().isEmpty());
 
-        Map<String, Object> payload = (Map<String, Object>) status.getPayload().get();
-
-        assertEquals(1l, (long) payload.get("status"));
+        assertEquals(Json.createValue(1l), getJsonPayload(status).get("status"));
 
         cancel.sendRequest();
 
@@ -134,15 +145,32 @@ public class ROSBindingTest {
             throw new IOException(e);
         }
 
+        // operation must be rebound
+        getStatus = ProtocolBindings.bind(actionURI, form1);
+
         getStatus.sendRequest();
         status = getStatus.getResponse();
 
-        if (status.getPayload().isPresent()) {
-            payload = (Map<String, Object>) status.getPayload().get();
-            assertEquals(2l, (long) payload.get("status"));
+        if (!status.getPayload().isEmpty()) {
+            assertEquals(Json.createValue(2l), getJsonPayload(status).get("status"));
         } else {
-            assertTrue(status.getStatus().equals(Response.ResponseStatus.CONSUMER_ERROR));
+            assertTrue(status.getStatus().equals(Response.ResponseStatus.CLIENT_ERROR));
         }
+    }
+
+    private void setJsonPayload(Operation op, String json) throws IOException {
+        ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes());
+        Collection<Literal> p = RepresentationHandlers.deserialize(in, op.getTargetURI(), JsonHandler.APPLICATION_JSON_CT);
+
+        op.setPayload(p);
+    }
+
+    private JsonObject getJsonPayload(Response r) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        RepresentationHandlers.serialize(r.getPayload(), out, r.getOperation().getTargetURI());
+
+        JsonReader reader = Json.createReader(new StringReader(out.toString()));
+        return reader.readObject();
     }
 
 }
