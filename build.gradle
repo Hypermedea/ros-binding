@@ -30,8 +30,8 @@ dependencies {
     compileOnly group: 'org.jacamo', name: 'jacamo', version: '1.2'
     testImplementation group: 'org.jacamo', name: 'jacamo', version: '1.2'
 
-    compileOnly 'com.github.Hypermedea:hypermedea:af46c10'
-    testImplementation 'com.github.Hypermedea:hypermedea:af46c10'
+    compileOnly 'com.github.Hypermedea:hypermedea:798cd93'
+    testImplementation 'com.github.Hypermedea:hypermedea:798cd93'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'

@@ -1,21 +1,21 @@
+shape_uri("ros+ws://localhost:9090/turtle_shape") .
 shape_payload(json([ kv(edges, 5), kv(radius, 1.6) ])) . // FIXME strings aren't parsed?
 
 +!start :
-    true
+    shape_uri(URI) & shape_payload(P)
     <-
-    makeArtifact("turtlesim", "org.hypermedea.ThingArtifact", ["turtlesim.ttl"], ArtId) ;
-    focus(ArtId) ;
-    !run .
+    post(URI, P) .
 
-+!run :
-    shape_payload(P)
++rdf(Anchor, "https://github.com/RobotWebTools/rosbridge_suite/blob/ros1/ROSBRIDGE_PROTOCOL.md#goalId", Target) :
+    shape_uri(Anchor)
     <-
-    invokeAction("turtle_shape", P, Result) ;
-    Result = resource(Action) ;
-    query(Action) .
+    !query(Target) .
 
-+!query(Action)
++!query(ActionURI)
     <-
-    queryAction(Action) ;
+    get(ActionURI) ;
     .wait(1000) ;
-    !!query(Action) .
+    !!query(ActionURI) .
+
+{ include("$jacamoJar/templates/common-cartago.asl") }
+{ include("$jacamoJar/templates/common-moise.asl") }

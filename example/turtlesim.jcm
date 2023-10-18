@@ -3,11 +3,11 @@ mas turtlesim_mas {
     agent turtlesim {
         goals: start
         join: ros_workspace
-        //focus: ros_workspace.turtlesim
+        focus: ros_workspace.h
     }
 
     workspace ros_workspace  {
-        //artifact turtlesim: org.hypermedea.ThingArtifact("turtlesim.ttl")
+        artifact h: org.hypermedea.HypermedeaArtifact()
     }
 
 }

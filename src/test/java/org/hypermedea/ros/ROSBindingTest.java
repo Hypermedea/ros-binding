@@ -8,7 +8,6 @@ import org.hypermedea.op.Operation;
 import org.hypermedea.op.ProtocolBindings;
 import org.hypermedea.op.Response;
 import org.hypermedea.tools.Identifiers;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import javax.json.Json;
@@ -27,11 +26,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ROSBindingTest {
-
-    @BeforeAll
-    public static void init() {
-        ProtocolBindings.registerBinding(ROSBinding.class.getName());
-    }
 
     @Test
     public void testPublish() throws IOException {
