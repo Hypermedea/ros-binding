@@ -47,7 +47,7 @@ public class ROSBinding extends BaseProtocolBinding {
             String method = (String) formFields.get(Operation.METHOD_NAME_FIELD);
             String id = uri.getFragment();
 
-            if (uri.getFragment() == null || id.isEmpty()) {
+            if (id == null || id.isEmpty()) {
                 switch (method) {
                     case Operation.PUT:
                         BaseOperation publishOp = new ROSPublishOperation(targetURI, formFields);
@@ -72,6 +72,7 @@ public class ROSBinding extends BaseProtocolBinding {
             } else {
                 switch (method) {
                     case Operation.GET:
+                    case Operation.WATCH:
                         BaseOperation getStatusOp = new ROSGetStatusOperation(targetURI, formFields);
                         return getStatusOp;
 
