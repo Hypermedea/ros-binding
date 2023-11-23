@@ -17,9 +17,9 @@ dependencies {
     implementation group: 'org.jacamo', name: 'jacamo', version: '1.2'
 
     // note: artifact can also be published to Maven local (see 'publishToMavenLocal' task in hypermedea-lib)
-    implementation group: 'com.github.Hypermedea', name: 'hypermedea', version: '798cd93'
+    implementation group: 'com.github.Hypermedea', name: 'hypermedea', version: '0.4'
 
-    // protocol binding libraries declared in 'bindings.txt'
+    // ROS binding library
     implementation group: 'com.github.Hypermedea', name: 'ros-binding', version: 'cce85e8'
 }
 
