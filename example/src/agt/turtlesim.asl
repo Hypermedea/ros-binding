@@ -10,14 +10,9 @@ shape_form([kv("https://github.com/RobotWebTools/rosbridge_suite/blob/ros1/ROSBR
 +rdf(Anchor, "https://github.com/RobotWebTools/rosbridge_suite/blob/ros1/ROSBRIDGE_PROTOCOL.md#goalId", Target) :
     shape_uri(Anchor)
     <-
-    // TODO use watch() instead
-    !query(Target) .
+    watch(Target) .
 
-+!query(ActionURI)
-    <-
-    get(ActionURI) ;
-    .wait(1000) ;
-    !!query(ActionURI) .
++json(Msg) <- .print(Msg) .
 
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }

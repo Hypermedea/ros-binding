@@ -20,7 +20,7 @@ dependencies {
     implementation group: 'com.github.Hypermedea', name: 'hypermedea', version: '0.4'
 
     // ROS binding library
-    implementation group: 'com.github.Hypermedea', name: 'ros-binding', version: 'cce85e8'
+    implementation group: 'com.github.Hypermedea', name: 'ros-binding', version: '032f1ca'
 }
 
 task run (type: JavaExec, dependsOn: 'classes') {
