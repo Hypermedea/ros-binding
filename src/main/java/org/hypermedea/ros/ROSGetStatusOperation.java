@@ -67,6 +67,12 @@ public class ROSGetStatusOperation extends ROSOperation {
     }
 
     @Override
+    protected void end() throws IOException {
+        super.end();
+        topic.unsubscribe();
+    }
+
+    @Override
     protected String getTopicName(String path) {
         if (!path.endsWith("/")) path += "/";
         return path + "status";

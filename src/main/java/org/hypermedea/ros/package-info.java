@@ -25,6 +25,7 @@
  *   The mapping to Hypermedea operations is then as follows:
  * </p>
  * <table>
+ *     <caption>Mapping between Hypermedea and ROS</caption>
  *     <tr>
  *         <th>Hypermedea operation</th>
  *         <th>ROS operation</th>

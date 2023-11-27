@@ -1,9 +1,10 @@
 plugins {
     id 'java'
+    id 'maven-publish'
 }
 
 group 'org.hypermedea'
-version '0.4'
+version '0.4.1'
 
 java {
     toolchain {
@@ -17,6 +18,7 @@ repositories {
     maven { url 'https://repo.gradle.org/gradle/libs-releases' }
     maven { url 'https://raw.github.com/jacamo-lang/mvn-repo/master' }
     maven { url 'https://jitpack.io' }
+    mavenLocal()
 }
 
 dependencies {
@@ -30,8 +32,8 @@ dependencies {
     compileOnly group: 'org.jacamo', name: 'jacamo', version: '1.2'
     testImplementation group: 'org.jacamo', name: 'jacamo', version: '1.2'
 
-    compileOnly 'com.github.Hypermedea:hypermedea:0.4'
-    testImplementation 'com.github.Hypermedea:hypermedea:0.4'
+    compileOnly 'com.github.Hypermedea:hypermedea:0.4.1'
+    testImplementation 'com.github.Hypermedea:hypermedea:0.4.1'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
@@ -39,4 +41,16 @@ dependencies {
 
 test {
     useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = group
+            artifactId = 'ros-binding'
+            version = version
+
+            from components.java
+        }
+    }
 }

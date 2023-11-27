@@ -10,9 +10,18 @@ shape_form([kv("https://github.com/RobotWebTools/rosbridge_suite/blob/ros1/ROSBR
 +rdf(Anchor, "https://github.com/RobotWebTools/rosbridge_suite/blob/ros1/ROSBRIDGE_PROTOCOL.md#goalId", Target) :
     shape_uri(Anchor)
     <-
-    watch(Target) .
+    watch(Target) ;
+    +watching(Target) .
 
-+json(Msg) <- .print(Msg) .
++json(Msg) :
+    watching(URI)
+    <-
+    .member(kv(status, Status), Msg) ;
+    .print(Status) ;
+    if (Status = 3) {
+        .print("Action done, forgetting resource: ", URI) ;
+        forget(URI)
+    } .
 
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }

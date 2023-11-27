@@ -2,7 +2,7 @@ plugins {
     id 'java'
 }
 
-version '0.1'
+version '0.2'
 group   'org.hypermedea'
 
 repositories {
@@ -17,10 +17,10 @@ dependencies {
     implementation group: 'org.jacamo', name: 'jacamo', version: '1.2'
 
     // note: artifact can also be published to Maven local (see 'publishToMavenLocal' task in hypermedea-lib)
-    implementation group: 'com.github.Hypermedea', name: 'hypermedea', version: '0.4'
+    implementation group: 'com.github.Hypermedea', name: 'hypermedea', version: '0.41'
 
     // ROS binding library
-    implementation group: 'com.github.Hypermedea', name: 'ros-binding', version: '032f1ca'
+    implementation group: 'com.github.Hypermedea', name: 'ros-binding', version: '0.4.1'
 }
 
 task run (type: JavaExec, dependsOn: 'classes') {
